@@ -30,56 +30,7 @@
 //   console.log("Server running on port 3000");
 // });
 
-
-const express = require("express");
-const multer = require("multer");
-const cors = require("cors");
-const { put } = require("@vercel/blob");
-
-const app = express();
-
-app.use(cors());
-
-// ✅ IMPORTANT: use memory storage (NOT disk)
-const upload = multer({
-  storage: multer.memoryStorage(),
-});
-
-// ✅ Upload API
-app.post("/upload", upload.single("image"), async (req, res) => {
-  try {
-    // check file
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    // upload to Vercel Blob
-    const blob = await put("uploads/" + req.file.originalname, req.file.buffer, {
-      access: "public",
-      addRandomSuffix: true,
-    });
-
-    return res.json({
-      message: "File uploaded successfully",
-      url: blob.url, // ✅ THIS IS YOUR IMAGE URL
-      imgename: blob.pathname
-    });
-  } catch (error) {
-    return res.status(500).json({
-      error: error.message,
-    });
-  }
-});
-
-// ❌ REMOVE THIS (not needed anymore)
-// app.use("/uploads", express.static("uploads"));
-
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
-
-module.exports = app;
-
+/////////////////////////////////////////////////////////////////////////////////////
 
 // const express = require("express");
 // const multer = require("multer");
@@ -87,41 +38,33 @@ module.exports = app;
 // const { put } = require("@vercel/blob");
 
 // const app = express();
+
 // app.use(cors());
 
-// // ✅ Memory storage
+// // ✅ IMPORTANT: use memory storage (NOT disk)
 // const upload = multer({
 //   storage: multer.memoryStorage(),
-//   limits: { fileSize: 2 * 1024 * 1024 },
 // });
 
-// // ✅ MULTIPLE IMAGE UPLOAD
-// app.post("/upload", upload.array("images", 10), async (req, res) => {
+// // ✅ Upload API
+// app.post("/upload", upload.single("image"), async (req, res) => {
 //   try {
-//     if (!req.files || req.files.length === 0) {
-//       return res.status(400).json({ error: "No files uploaded" });
+//     // check file
+//     if (!req.file) {
+//       return res.status(400).json({ error: "No file uploaded" });
 //     }
 
-//     const uploadResults = [];
-
-//     // ✅ Loop through all files
-//     for (const file of req.files) {
-//       const blob = await put(file.originalname, file.buffer, {
-//         access: "public",
-//         addRandomSuffix: true, // avoid duplicate error
-//       });
-
-//       uploadResults.push({
-//         url: blob.url,
-//         name: blob.pathname,
-//       });
-//     }
-
-//     return res.json({
-//       message: "Files uploaded successfully",
-//       images: uploadResults,
+//     // upload to Vercel Blob
+//     const blob = await put("uploads/" + req.file.originalname, req.file.buffer, {
+//       access: "public",
+//       addRandomSuffix: true,
 //     });
 
+//     return res.json({
+//       message: "File uploaded successfully",
+//       url: blob.url, // ✅ THIS IS YOUR IMAGE URL
+//       imgename: blob.pathname
+//     });
 //   } catch (error) {
 //     return res.status(500).json({
 //       error: error.message,
@@ -129,8 +72,63 @@ module.exports = app;
 //   }
 // });
 
+// // ❌ REMOVE THIS (not needed anymore)
+// // app.use("/uploads", express.static("uploads"));
+
 // app.listen(3000, () => {
 //   console.log("Server running on port 3000");
 // });
 
 // module.exports = app;
+///////////////////////////////////////////////////////////////////////////////////////////////////
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const cloudinary = require("cloudinary").v2;
+
+const app = express();
+app.use(cors());
+
+// ✅ Configure Cloudinary
+cloudinary.config({
+  cloud_name: "dnwehnrdx",
+  api_key: "398563797848361",
+  api_secret: "gZnOrGsHjgamy0dTxo9sOsstQ34",
+});
+
+// ✅ Multer memory storage
+const upload = multer({
+  storage: multer.memoryStorage(),
+});
+
+// ✅ Upload API
+app.post("/upload", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // Convert buffer to base64
+    const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(fileStr, {
+      folder: "uploads",
+    });
+
+    res.json({
+      message: "Uploaded successfully",
+      url: result.secure_url,
+      public_id: result.public_id,
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
+
+module.exports = app;
