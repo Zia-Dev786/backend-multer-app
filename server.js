@@ -62,7 +62,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     return res.json({
       message: "File uploaded successfully",
       url: blob.url, // ✅ THIS IS YOUR IMAGE URL
-    });
+      imgename:blob.pathname    });
 
   } catch (error) {
     return res.status(500).json({
