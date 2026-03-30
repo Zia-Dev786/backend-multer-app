@@ -56,6 +56,7 @@ app.post("/upload", upload.single("image"), async (req, res) => {
     // upload to Vercel Blob
     const blob = await put(req.file.originalname, req.file.buffer, {
       access: "public",
+      addRandomSuffix: true,
     });
 
     return res.json({
